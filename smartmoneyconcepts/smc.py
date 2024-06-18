@@ -78,10 +78,16 @@ class smc:
                 (ohlc["low"].shift(1) > ohlc["high"].shift(-1))
                 & (ohlc["close"] < ohlc["open"])
             ),
+            # Если условие выше выполняется, то есть FVG найден,
+            # То проверяется какой FVG(Бычий или медвежий) найден по закрытию
             np.where(ohlc["close"] > ohlc["open"], 1, -1),
             np.nan,
         )
 
+
+        # Сначала находим все ФВГ
+        # Потом среди них для бычих свеч отмечается - минимум следующей свечи
+        # Для медвежьих - мининимум предыдущей свечи
         top = np.where(
             ~np.isnan(fvg),
             np.where(
@@ -103,6 +109,8 @@ class smc:
         )
 
         # if there are multiple consecutive fvg then join them together using the highest top and lowest bottom and the last index
+        # Проверяет два подряд идущих ФВГ, если они одинаковые (оба бычьи), то отмечает максимальную верхнюю границу
+        # Текущий ФВГ и его границы замещаются значением NaN
         if join_consecutive:
             for i in range(len(fvg) - 1):
                 if fvg[i] == fvg[i + 1]:
